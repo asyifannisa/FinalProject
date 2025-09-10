@@ -36,7 +36,7 @@ def main():
     if choice == 'Home':
         st.subheader("Go Predict Processing Time for Better Operational 🚀")
         st.markdown(desc_temp)
-        with st.expander("How to use thi Machine"):
+        with st.expander("How to use this Machine"):
             st.markdown("""
             1) Buka tab **Prediction**  
             2) Isi parameter order  
