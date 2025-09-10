@@ -38,9 +38,9 @@ def main():
         st.markdown(desc_temp)
         with st.expander("How to use this Machine"):
             st.markdown("""
-            1) Buka tab **Prediction**  
-            2) Isi parameter order  
-            3) Klik **Predict** → hasil dalam **menit** + interpretasi
+            1) Open tab **Prediction**  
+            2) Input the data  
+            3) Klik **Predict** → result will be within **minutes** + interpretation
             """)
     elif choice == "Prediction":
         # st.subheader("Welcome to Our Prediction Machine")
