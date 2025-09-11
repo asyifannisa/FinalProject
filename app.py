@@ -1,14 +1,21 @@
+import sys
+
+# 1) Import class yang dipakai saat training
+from custom_transformers import DropColumns
+
+# 2) Registrasi ke modul __main__ supaya pickle yang referensinya __main__.DropColumns bisa ketemu
+main_mod = sys.modules.get("__main__")
+if main_mod is None:
+    sys.modules["__main__"] = sys.modules[__name__]
+    main_mod = sys.modules["__main__"]
+
+# Taruh DropColumns di __main__
+setattr(main_mod, "DropColumns", DropColumns)
+
 import streamlit as st
 import streamlit.components.v1 as stc
 
-import sys
-from custom_transformers import DropColumns  # class yang sama seperti saat training
-# registrasi ke modul yang sedang berjalan (= __main__ / app.py)
-setattr(sys.modules[__name__], "DropColumns", DropColumns)
-# pastikan alias __main__ menunjuk ke modul ini juga (aman di Streamlit)
-sys.modules["__main__"] = sys.modules[__name__]
-
-from prediction_app import run_prediction_app 
+from prediction_app import run_prediction_app
 
 html_temp = """
             <div style="
