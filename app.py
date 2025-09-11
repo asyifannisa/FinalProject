@@ -1,6 +1,13 @@
 import streamlit as st
 import streamlit.components.v1 as stc
 
+import sys
+from custom_transformers import DropColumns  # class yang sama seperti saat training
+# registrasi ke modul yang sedang berjalan (= __main__ / app.py)
+setattr(sys.modules[__name__], "DropColumns", DropColumns)
+# pastikan alias __main__ menunjuk ke modul ini juga (aman di Streamlit)
+sys.modules["__main__"] = sys.modules[__name__]
+
 from prediction_app import run_prediction_app 
 
 html_temp = """
@@ -39,8 +46,8 @@ def main():
         with st.expander("How to use this Machine"):
             st.markdown("""
             1) Open tab **Prediction**  
-            2) Input the data  
-            3) Klik **Predict** → result will be within **minutes** + interpretation
+            2) Input your data (form)  
+            3) Click **Predict** → results in **minutes** + interpretation
             """)
     elif choice == "Prediction":
         # st.subheader("Welcome to Our Prediction Machine")
