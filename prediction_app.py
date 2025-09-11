@@ -1,7 +1,11 @@
 import os
+import sys
+import types
 import numpy as np
 import pandas as pd
 import streamlit as st
+
+from custom_transformers import DropColumns
 import joblib
 
 attribute_info = """
@@ -151,33 +155,39 @@ def run_prediction_app():
     )
 
     # --- Load model (boleh pipeline yang sudah punya encoder di dalam) ---
-    model = load_model("processing_time_model.pkl")   # placeholder pkl nanti ubah sesuai final
+    MODEL_PATH = os.path.join(os.path.dirname(__file__), "processing_time_model.pkl")
+    if not os.path.exists(MODEL_PATH):
+        st.error(f"❌ Model tidak ditemukan di: {MODEL_PATH}")
+        st.stop()
+    try:
+        model = joblib.load(MODEL_PATH)
+    except Exception as e:
+        st.error(f"❌ Gagal load model: {e}")
+        st.stop()   
 
     # --- Prediksi ---
-    if model is not None:
-        # Jika model pipeline sudah bisa terima string kategori, pakai langsung:
-        try:
-            pred_time = float(model.predict(feats_df)[0])
-        except Exception:
-            # Jika model TIDAK punya preprocessor dan butuh angka: encode kategori
-            feats_df_enc = feats_df.copy()
-            feats_df_enc["store_primary_category"] = feats_df_enc["store_primary_category"].map(CAT_TO_ID).fillna(0).astype(int)
-            pred_time = float(model.predict(feats_df_enc)[0])
-    else:
-        # Fallback dummy yang deterministik (bukan random), biar demo konsisten
-        busy_ratio = min(total_busy_partners / max(total_onshift_partners, 1), 1.0)
-        price_spread = max_item_price - min_item_price
-
-        base = 12.0
-        base += 0.8 * total_items
-        base += 0.02 * subtotal
-        base += 1.5 * max(distinct_items - 1, 0)
-        base += 10.0 * busy_ratio
-        base += 0.25 * total_outstanding_orders
-        base += min(price_spread / 50000.0, 6.0)   # sedikit penalti spread
-        pred_time = max(5.0, min(base, 240.0))
+    try:
+        pred_time = float(model.predict(feats_df)[0])         # coba langsung (pipeline lengkap)
+    except Exception as e1:
+        st.warning(f"Model gagal menerima input raw: {e1}")
+    try:
+        feats_df_enc = feats_df.copy()
+        feats_df_enc["store_primary_category"] = (
+            feats_df_enc["store_primary_category"].map(CAT_TO_ID).fillna(0).astype(int)
+        )
+        pred_time = float(model.predict(feats_df_enc)[0]) # coba versi encoded numerik
+    except Exception as e2:
+        st.error("❌ Model tetap gagal dipakai walau sudah di-encode.")
+        with st.expander("Detail error"):
+            st.code(f"raw predict error: {e1}")
+            st.code(f"encoded predict error: {e2}")
+        with st.expander("feats_df preview"):
+            st.dataframe(feats_df)
+            st.write("dtypes:", feats_df.dtypes.astype(str).to_dict())
+        st.stop()
 
     pred_time = round(pred_time, 1)
+    st.caption("✅ Prediksi menggunakan model .pkl.")
 
     # --- Messaging berbasis SLA ---
     c1, c2, c3 = st.columns(3)
